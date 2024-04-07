@@ -258,9 +258,7 @@ std::ostream& ossimJ2kSizRecord::print(std::ostream& out,
    std::string pfx = prefix;
    pfx += "siz.";
    
-   out.setf(std::ios_base::hex, std::ios_base::basefield);
-   out << pfx << "marker: 0x" << m_marker << "\n";
-   out.setf(std::ios_base::fmtflags(0), std::ios_base::basefield);
+   out << pfx << "marker: 0x" << std::hex << m_marker << "\n";
 
    out << pfx << "Lsiz:   " << m_Lsiz       << "\n"
        << pfx << "Rsiz:   " << m_Rsiz       << "\n"

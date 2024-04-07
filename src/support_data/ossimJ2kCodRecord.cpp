@@ -90,9 +90,7 @@ std::ostream& ossimJ2kCodRecord::print(std::ostream& out,
    std::string pfx = prefix;
    pfx += "cod.";
 
-   out.setf(std::ios_base::hex, std::ios_base::basefield);
-   out << pfx << "marker: 0xff90\n";
-   out.setf(std::ios_base::fmtflags(0), std::ios_base::basefield);
+   out << pfx << "marker: 0x" << std::hex << m_marker << "\n";
 
    out << pfx << "Lcod: " << m_lcod       << "\n"
        << pfx << "Scod: " << int(m_scod)  << "\n"
