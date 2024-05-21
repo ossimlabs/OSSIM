@@ -32,7 +32,10 @@
 #include <ossim/base/ossimBooleanProperty.h>
 #include <ossim/base/ossimStringProperty.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
+#include <ossim/imaging/ossimImageGeometryRegistry.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
+// #include <ossim/projection/ossimQuickbirdRpcModel.h>
+// #include <ossim/projection/ossimRpcModel.h>
 #include <xtiffio.h>
 #include <geo_normalize.h>
 #include <cstdlib> /* for abs(int) */
@@ -1487,7 +1490,7 @@ bool ossimTiffTileSource::loadFromRgbaU8Strip(const ossimIrect &tile_rect,
       {
          if (TIFFReadRGBAStrip(theTiffPtr,
                                (strip * theRowsPerStrip[theCurrentDirectory]),
-                               (uint32 *)theBuffer) == 0) // use tiff typedef
+                               (ossim_uint32 *)theBuffer) == 0) // use tiff typedef
          {
             ossimNotify(ossimNotifyLevel_WARN)
                 << MODULE << " Error reading strip!" << endl;
@@ -1547,7 +1550,7 @@ bool ossimTiffTileSource::loadFromRgbaU8Strip(const ossimIrect &tile_rect,
             // Copy the data to the output buffer.
             ossim_uint32 i = 0;
 
-            for (int32 sample = clip_rect.ul().x;
+            for (ossim_int32 sample = clip_rect.ul().x;
                  sample <= clip_rect.lr().x;
                  sample++)
             {
@@ -1652,7 +1655,7 @@ bool ossimTiffTileSource::loadFromRgbaU8aStrip(const ossimIrect &tile_rect,
    {
       if (TIFFReadRGBAStrip(theTiffPtr,
                             (strip * theRowsPerStrip[theCurrentDirectory]),
-                            (uint32 *)theBuffer) == 0) // use tiff typedef
+                            (ossim_uint32 *)theBuffer) == 0) // use tiff typedef
       {
          ossimNotify(ossimNotifyLevel_WARN)
              << MODULE << " Error reading strip!" << endl;
@@ -1700,7 +1703,7 @@ bool ossimTiffTileSource::loadFromRgbaU8aStrip(const ossimIrect &tile_rect,
             // Copy the data to the output buffer.
             ossim_uint32 i = 0;
             ossim_uint32 j = 0;
-            for (int32 sample = clip_rect.ul().x;
+            for (ossim_int32 sample = clip_rect.ul().x;
                  sample <= clip_rect.lr().x;
                  sample++)
             {
@@ -2738,3 +2741,125 @@ bool ossimTiffTileSource::allocateBuffer()
 
    return bSuccess;
 }
+
+#if 1
+ossimRefPtr<ossimImageGeometry> ossimTiffTileSource::getImageGeometry()
+{
+   if ( !theGeometry )
+   {
+      //---
+      // Check for external geom - this is a file.geom not to be confused with
+      // geometries picked up from dot.xml, dot.prj, dot.j2w and so on.  We
+      // will check for that later if the getInternalImageGeometry fails.
+      //---
+      theGeometry = getExternalImageGeometry();
+      
+      if ( !theGeometry )
+      {
+         // Check the internal geometry first to avoid a factory call.
+         theGeometry = getInternalImageGeometry();
+         
+         //---
+         // WARNING:
+         // Must create/set the geometry at this point or the next call to
+         // ossimImageGeometryRegistry::extendGeometry will put us in an infinite loop
+         // as it does a recursive call back to ossimImageHandler::getImageGeometry().
+         //---
+         if ( !theGeometry )
+         {
+            theGeometry = new ossimImageGeometry();
+         }
+         
+         // Check for set projection.
+         if ( !theGeometry->getProjection() )
+         {
+            // Last try factories for projection.
+            ossimImageGeometryRegistry::instance()->extendGeometry(this);
+         }
+      }
+
+      // Set image things the geometry object should know about.
+      initImageParameters( theGeometry.get() );
+      
+      if (traceDebug())
+      {
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "ossimTiffTileSource::getImageGeometry geometry:\n"
+            << *(theGeometry.get()) << "\n";
+      }
+      
+   }
+   return theGeometry;
+   
+} // End: ossimTiffTileSource::getImageGeometry()
+
+ossimRefPtr<ossimImageGeometry> ossimTiffTileSource::getInternalImageGeometry()
+{
+   static const char M[] = "ossimTiffTileSource::getInternalImageGeometry";
+
+   ossimRefPtr<ossimImageGeometry> geom = 0;
+   
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << M << " entered...\n";
+   }
+
+   if ( m_streamAdaptor )
+   {
+      std::shared_ptr<ossim::istream> is = m_streamAdaptor->getStream();
+      if(is)
+      {
+         is->seekg(0);
+         
+         ossimTiffInfo* ti = new ossimTiffInfo();
+
+         // Do a print to a memory stream.
+         std::ostringstream out;
+         ti->print( *(is.get()), out);
+         
+         // Open an input stream to pass to the keyword list.
+         std::istringstream in( out.str() );
+         
+         // Since the print is in key:value format we can pass to a keyword list.
+         ossimKeywordlist kwl;
+         if ( kwl.parseStream(in) )      
+         {
+            std::string key;
+            std::string value;
+            
+            ossimRefPtr<ossimProjection> proj = 0;
+
+            // No RPCs, look for basic map projection:
+            ossimKeywordlist geomKwl;
+            if ( ti->getImageGeometry( kwl, geomKwl, 0) == true )
+            {
+               std::string prefix = "image0.";
+               proj = ossimProjectionFactoryRegistry::instance()->createProjection(
+                  geomKwl, prefix.c_str() );
+            }
+
+            if ( proj.valid() )
+            {
+               // Create and assign projection to our ossimImageGeometry object.
+               geom = new ossimImageGeometry();
+               geom->setProjection( proj.get() );
+            }
+         }
+
+         // Cleanup:
+         delete ti;
+         ti = 0;
+      }
+   }
+   
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << M << " exit status "
+                                          << (geom.valid()?"success":"failure") << "\n";
+   }
+   
+   return geom;
+   
+} // End: ossimTiffTileSource::getInternalImageGeometry()
+
+#endif

@@ -263,7 +263,7 @@ std::ostream& ossimJ2kSizRecord::print(std::ostream& out,
    out << pfx << "Lsiz:   " << m_Lsiz       << "\n"
        << pfx << "Rsiz:   " << m_Rsiz       << "\n"
        << pfx << "Xsiz:   " << m_Xsiz       << "\n"
-       << pfx << "Yziz:   " << m_Ysiz       << "\n"
+       << pfx << "Ysiz:   " << m_Ysiz       << "\n"
        << pfx << "XOsiz:  " << m_XOsiz      << "\n"
        << pfx << "YOsiz:  " << m_YOsiz      << "\n"
        << pfx << "XTsiz:  " << m_XTsiz      << "\n"

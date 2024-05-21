@@ -25,8 +25,6 @@
 #include <limits>
 #include <ostream>
 
-using namespace std;
-
 static const std::string ALIGN_TILES_KW         = "align_tiles";         // bool
 static const std::string BLOCK_SIZE_KW          = "block_size";          // unsigned int
 static const std::string FLUSH_TILES_KW         = "flush_tiles";         // bool
@@ -121,7 +119,7 @@ bool ossimWriter::open()
    if ( theFilename.size() && hasImageType( theOutputImageType ) )
    {
       std::ofstream* os = new std::ofstream();
-      os->open( theFilename.c_str(), ios::out | ios::binary );
+      os->open( theFilename.c_str(), std::ios::out | std::ios::binary );
       if( os->is_open() )
       {
          m_str = os;
@@ -311,43 +309,43 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
    ossim_uint32 value_ui32;
    
    // image width tag 256:
-   tag   = ossim::OTIFFTAG_IMAGEWIDTH;
+   tag   = ossim::TIFFTAG_IMAGEWIDTH;
    count = 1;
    if ( theAreaOfInterest.width() <= OSSIM_DEFAULT_MAX_PIX_UINT16 )
    {
-      type = ossim::OTIFF_SHORT;
+      type = ossim::TIFF_SHORT;
       value_ui16 = (ossim_uint16)theAreaOfInterest.width();
       writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
    }
    else
    {
-      type = ossim::OTIFF_LONG;
+      type = ossim::TIFF_LONG;
       value_ui32 = theAreaOfInterest.width();
       writeTiffTag<ossim_uint32>( tag, type, count, &value_ui32, arrayWritePos );
    }
    ++tagCount;
    
    // image length tag 257:
-   tag   = ossim::OTIFFTAG_IMAGELENGTH;
+   tag   = ossim::TIFFTAG_IMAGELENGTH;
    count = 1;
    if ( theAreaOfInterest.height() <= OSSIM_DEFAULT_MAX_PIX_UINT16 )
    {
-      type = ossim::OTIFF_SHORT;
+      type = ossim::TIFF_SHORT;
       value_ui16 = (ossim_uint16)theAreaOfInterest.height();
       writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
    }
    else
    {
-      type = ossim::OTIFF_LONG;
+      type = ossim::TIFF_LONG;
       value_ui32 = theAreaOfInterest.height();
       writeTiffTag<ossim_uint32>( tag, type, count, &value_ui32, arrayWritePos );
    }
    ++tagCount;
 
    // bits per sample tag 258:
-   tag   = ossim::OTIFFTAG_BITSPERSAMPLE;
+   tag   = ossim::TIFFTAG_BITSPERSAMPLE;
    count = theInputConnection->getNumberOfOutputBands();
-   type  = ossim::OTIFF_SHORT;
+   type  = ossim::TIFF_SHORT;
    value_ui16 = (ossim_uint16)ossim::getBitsPerPixel( theInputConnection->getOutputScalarType() );
    if ( count == 1 )
    {
@@ -361,31 +359,31 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
    ++tagCount;
 
    // compression tag 259:
-   tag   = ossim::OTIFFTAG_COMPRESSION;
-   type  = ossim::OTIFF_SHORT;
+   tag   = ossim::TIFFTAG_COMPRESSION;
+   type  = ossim::TIFF_SHORT;
    count = 1;
    value_ui16 = ossim::COMPRESSION_NONE; // tmp only uncompressed supported.
    writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
    ++tagCount;
    
    // photo interpretation tag 262:
-   tag   = ossim::OTIFFTAG_PHOTOMETRIC;
-   type  = ossim::OTIFF_SHORT;
+   tag   = ossim::TIFFTAG_PHOTOMETRIC;
+   type  = ossim::TIFF_SHORT;
    count = 1;
    if ( theInputConnection->getNumberOfOutputBands() == 3 )
    {
-      value_ui16 = ossim::OPHOTO_RGB;
+      value_ui16 = ossim::PHOTO_RGB;
    }
    else
    {
-      value_ui16 = ossim::OPHOTO_MINISBLACK;
+      value_ui16 = ossim::PHOTO_MINISBLACK;
    }
    writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
    ++tagCount;
 
    // samples per pixel tag 277:
-   tag   = ossim::OTIFFTAG_SAMPLESPERPIXEL;
-   type  = ossim::OTIFF_SHORT;
+   tag   = ossim::TIFFTAG_SAMPLESPERPIXEL;
+   type  = ossim::TIFF_SHORT;
    count = 1;
    value_ui16 = theInputConnection->getNumberOfOutputBands();
    writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
@@ -398,44 +396,44 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
    }
    
    // planar conf tag 284:
-   tag   = ossim::OTIFFTAG_PLANARCONFIG;
-   type  = ossim::OTIFF_SHORT;
+   tag   = ossim::TIFFTAG_PLANARCONFIG;
+   type  = ossim::TIFF_SHORT;
    count = 1;
-   value_ui16 = ossim::OTIFFTAG_PLANARCONFIG_SEPARATE;
+   value_ui16 = ossim::TIFFTAG_PLANARCONFIG_SEPARATE;
    writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
    ++tagCount;
 
    if ( isTiled() )
    {
       // tile width tag 322:
-      tag   = ossim::OTIFFTAG_TILEWIDTH;
+      tag   = ossim::TIFFTAG_TILEWIDTH;
       count = 1;
       if (  m_outputTileSize.x <= OSSIM_DEFAULT_MAX_PIX_UINT16 )
       {
-         type = ossim::OTIFF_SHORT;
+         type = ossim::TIFF_SHORT;
          value_ui16 = (ossim_uint16)m_outputTileSize.x;
          writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
       }
       else
       {
-         type = ossim::OTIFF_LONG;
+         type = ossim::TIFF_LONG;
          value_ui32 = (ossim_uint32)m_outputTileSize.x;
          writeTiffTag<ossim_uint32>( tag, type, count, &value_ui32, arrayWritePos );
       }
       ++tagCount;
       
       // tile length tag 323:
-      tag   = ossim::OTIFFTAG_TILELENGTH;
+      tag   = ossim::TIFFTAG_TILELENGTH;
       count = 1;
       if (  m_outputTileSize.y <= OSSIM_DEFAULT_MAX_PIX_UINT16 )
       {
-         type = ossim::OTIFF_SHORT;
+         type = ossim::TIFF_SHORT;
          value_ui16 = (ossim_uint16)m_outputTileSize.y;
          writeTiffTag<ossim_uint16>( tag, type, count, &value_ui16, arrayWritePos );
       }
       else
       {
-         type = ossim::OTIFF_LONG;
+         type = ossim::TIFF_LONG;
          value_ui32 = (ossim_uint32)m_outputTileSize.y;
          writeTiffTag<ossim_uint32>( tag, type, count, &value_ui32, arrayWritePos );
       }
@@ -443,23 +441,23 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
    }
 
    // tile offsets tag 324:
-   tag   = ossim::OTIFFTAG_TILEOFFSETS;
+   tag   = ossim::TIFFTAG_TILEOFFSETS;
    count = tile_offsets.size();
-   type  = ossim::OTIFF_LONG8;
+   type  = ossim::TIFF_LONG8;
    writeTiffTag<ossim_uint64>( tag, type, count, &tile_offsets.front(), arrayWritePos );
    ++tagCount;
 
    // tile byte counts tag 325:
-   tag   = ossim::OTIFFTAG_TILEBYTECOUNTS;
+   tag   = ossim::TIFFTAG_TILEBYTECOUNTS;
    count = tile_byte_counts.size();
-   type  = ossim::OTIFF_LONG8;
+   type  = ossim::TIFF_LONG8;
    writeTiffTag<ossim_uint64>( tag, type, count, &tile_byte_counts.front(), arrayWritePos );
    ++tagCount;
 
    // sample format tag 339:
-   tag   = ossim::OTIFFTAG_SAMPLEFORMAT;
+   tag   = ossim::TIFFTAG_SAMPLEFORMAT;
    count = theInputConnection->getNumberOfOutputBands();
-   type  = ossim::OTIFF_SHORT;
+   type  = ossim::TIFF_SHORT;
    value_ui16 = getTiffSampleFormat();
    if ( count == 1 )
    {
@@ -506,8 +504,8 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
          // Model transform needed -- tag 34264:
          auto transform = mapProj->getModelTransform();
          count = 16; // 4x4 transform matrix
-         tag   = ossim::OMODEL_TRANSFORM_TAG;
-         type  = ossim::OTIFF_DOUBLE;
+         tag   = ossim::MODEL_TRANSFORM_TAG;
+         type  = ossim::TIFF_DOUBLE;
          vf.resize( count );
          auto m = transform.getData();
          for (int i=0; i<(int)count; ++i)
@@ -518,9 +516,9 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
       else
       {
          // model pixel scale tag 33550:
-         tag = ossim::OMODEL_PIXEL_SCALE_TAG;
+         tag = ossim::MODEL_PIXEL_SCALE_TAG;
          count = 3; // x, y, z
-         type = ossim::OTIFF_DOUBLE;
+         type = ossim::TIFF_DOUBLE;
          vf.resize(count);
          vf[0] = scale.x;
          vf[1] = scale.y;
@@ -529,9 +527,9 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
          ++tagCount;
 
          // model tie point tag 33992:
-         tag = ossim::OMODEL_TIE_POINT_TAG;
+         tag = ossim::MODEL_TIE_POINT_TAG;
          count = 6; // x, y, z
-         type = ossim::OTIFF_DOUBLE;
+         type = ossim::TIFF_DOUBLE;
          vf.resize(count);
          vf[0] = 0.0;   // x image point
          vf[1] = 0.0;   // y image point
@@ -544,9 +542,9 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
       }
 
       // geo key directory tag 34735:
-      tag   = ossim::OGEO_KEY_DIRECTORY_TAG;
+      tag   = ossim::GEO_KEY_DIRECTORY_TAG;
       count = 0; // set later.
-      type  = ossim::OTIFF_SHORT;
+      type  = ossim::TIFF_SHORT;
       std::vector<ossim_uint16> vs(0);
 
       // No
@@ -555,70 +553,70 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
       vs.push_back(0);
       vs.push_back(10); // Updated later.
 
-      vs.push_back(ossim::OGT_MODEL_TYPE_GEO_KEY); // 1024
+      vs.push_back(ossim::GT_MODEL_TYPE_GEO_KEY); // 1024
       vs.push_back(0);
       vs.push_back(1);
-      vs.push_back(mapProj->isGeographic() ? ossim::OMODEL_TYPE_GEOGRAPHIC :
-                   ossim::OMODEL_TYPE_PROJECTED);
+      vs.push_back(mapProj->isGeographic() ? ossim::MODEL_TYPE_GEOGRAPHIC :
+                   ossim::MODEL_TYPE_PROJECTED);
 
-      vs.push_back(ossim::OGT_RASTER_TYPE_GEO_KEY); // 1025
+      vs.push_back(ossim::GT_RASTER_TYPE_GEO_KEY); // 1025
       vs.push_back(0);
       vs.push_back(1);
-      vs.push_back(ossim::OPIXEL_IS_POINT);
+      vs.push_back(ossim::PIXEL_IS_POINT);
 
       if ( mapProj->isGeographic() )
       {
-         vs.push_back(ossim::OGEOGRAPHIC_TYPE_GEO_KEY); // 2048
+         vs.push_back(ossim::GEOGRAPHIC_TYPE_GEO_KEY); // 2048
          vs.push_back(0);
          vs.push_back(1);
          vs.push_back((ossim_uint16)(mapProj->getPcsCode()));
       }
 
-      vs.push_back(ossim::OGEOG_GEODETIC_DATUM_GEO_KEY); // 2050
+      vs.push_back(ossim::GEOG_GEODETIC_DATUM_GEO_KEY); // 2050
       vs.push_back(0);
       vs.push_back(1);
       vs.push_back((ossim_uint16)(mapProj->getDatum()->epsgCode()));
 
       if ( mapProj->isGeographic() )
       {
-         vs.push_back(ossim::OGEOG_ANGULAR_UNITS_GEO_KEY); // 2054
+         vs.push_back(ossim::GEOG_ANGULAR_UNITS_GEO_KEY); // 2054
          vs.push_back(0);
          vs.push_back(1);
-         vs.push_back(ossim::OANGULAR_DEGREE);
+         vs.push_back(ossim::ANGULAR_DEGREE);
       }
          
-      vs.push_back(ossim::OGEOG_ELLIPSOID_GEO_KEY); // 2056
+      vs.push_back(ossim::GEOG_ELLIPSOID_GEO_KEY); // 2056
       vs.push_back(0);
       vs.push_back(1);
       vs.push_back((ossim_uint16)(mapProj->getDatum()->ellipsoid()->getEpsgCode()));
 
       // Stored in external OOGEO_DOUBLE_PARAMS_TAG
-      vs.push_back(ossim::OGEOG_SEMI_MAJOR_AXIS); // 2057
-      vs.push_back(ossim::OGEO_DOUBLE_PARAMS_TAG); 
+      vs.push_back(ossim::GEOG_SEMI_MAJOR_AXIS); // 2057
+      vs.push_back(ossim::GEO_DOUBLE_PARAMS_TAG); 
       vs.push_back(1);
       vs.push_back(0);
          
-      vs.push_back(ossim::OGEOG_SEMI_MINOR_AXIS); // 2058
-      vs.push_back(ossim::OGEO_DOUBLE_PARAMS_TAG);
+      vs.push_back(ossim::GEOG_SEMI_MINOR_AXIS); // 2058
+      vs.push_back(ossim::GEO_DOUBLE_PARAMS_TAG);
       vs.push_back(1);
       vs.push_back(1);
 
-      vs.push_back(ossim::OPROJECTED_CS_TYPE_GEO_KEY); // 3072
+      vs.push_back(ossim::PROJECTED_CS_TYPE_GEO_KEY); // 3072
       vs.push_back(0);
       vs.push_back(1);
       vs.push_back((ossim_uint16)(mapProj->getPcsCode()));
 
-      vs.push_back(ossim::OPROJECTION_GEO_KEY); // 3074
+      vs.push_back(ossim::PROJECTION_GEO_KEY); // 3074
       vs.push_back(0);
       vs.push_back(1);
       vs.push_back((ossim_uint16)(mapProj->getPcsCode()));
 
       if ( mapProj->isGeographic() == false )
       {
-         vs.push_back(ossim::OPROJ_LINEAR_UNITS_GEO_KEY); // 3076
+         vs.push_back(ossim::PROJ_LINEAR_UNITS_GEO_KEY); // 3076
          vs.push_back(0);
          vs.push_back(1);
-         vs.push_back(ossim::OLINEAR_METER);
+         vs.push_back(ossim::LINEAR_METER);
       }
       
       count = vs.size();
@@ -627,9 +625,9 @@ bool ossimWriter::writeTiffTags( const std::vector<ossim_uint64>& tile_offsets,
       ++tagCount;
        
       // geo double params tag 33550:
-      tag   = ossim::OGEO_DOUBLE_PARAMS_TAG;
+      tag   = ossim::GEO_DOUBLE_PARAMS_TAG;
       count = 2; // ellipsoid major, minor axis
-      type  = ossim::OTIFF_DOUBLE;
+      type  = ossim::TIFF_DOUBLE;
       vf.resize( count );
       vf[0] = mapProj->getDatum()->ellipsoid()->a();
       vf[1] = mapProj->getDatum()->ellipsoid()->b();
@@ -700,19 +698,19 @@ bool ossimWriter::writeMinMaxTiffTags( std::streamoff& arrayWritePos )
    
    if ( status )
    {
-      writeTiffTag<ossim_uint16>( ossim::OTIFFTAG_MINSAMPLEVALUE,
-                                  ossim::OTIFF_SHORT,
+      writeTiffTag<ossim_uint16>( ossim::TIFFTAG_MINSAMPLEVALUE,
+                                  ossim::TIFF_SHORT,
                                   1, &minValue, arrayWritePos );
-      writeTiffTag<ossim_uint16>( ossim::OTIFFTAG_MAXSAMPLEVALUE,
-                                  ossim::OTIFF_SHORT,
+      writeTiffTag<ossim_uint16>( ossim::TIFFTAG_MAXSAMPLEVALUE,
+                                  ossim::TIFF_SHORT,
                                   1, &maxValue, arrayWritePos );
    }
    
    return status;
 }
 
-bool ossimWriter::writeSMinSMaxTiffTags( const vector<ossim_float64>& minBands,
-                                         const vector<ossim_float64>& maxBands,
+bool ossimWriter::writeSMinSMaxTiffTags( const std::vector<ossim_float64>& minBands,
+                                         const std::vector<ossim_float64>& maxBands,
                                          std::streamoff& arrayWritePos )
 {
    bool status = false;
@@ -732,12 +730,12 @@ bool ossimWriter::writeSMinSMaxTiffTags( const vector<ossim_float64>& minBands,
          case OSSIM_NORMALIZED_DOUBLE:
          {
             ossim_float32 v = static_cast<ossim_float32>(minValue);
-            writeTiffTag<ossim_float32>( ossim::OTIFFTAG_SMINSAMPLEVALUE,
-                                         ossim::OTIFF_FLOAT,
+            writeTiffTag<ossim_float32>( ossim::TIFFTAG_SMINSAMPLEVALUE,
+                                         ossim::TIFF_FLOAT,
                                          1, &v, arrayWritePos );
             v = static_cast<ossim_float32>(maxValue);
-            writeTiffTag<ossim_float32>( ossim::OTIFFTAG_SMAXSAMPLEVALUE,
-                                         ossim::OTIFF_FLOAT,
+            writeTiffTag<ossim_float32>( ossim::TIFFTAG_SMAXSAMPLEVALUE,
+                                         ossim::TIFF_FLOAT,
                                          1, &v, arrayWritePos );
             status = true;
             break;
@@ -1211,18 +1209,18 @@ ossim_uint16 ossimWriter::getTiffSampleFormat() const
       case OSSIM_USHORT15:
       case OSSIM_UINT16:
       case OSSIM_UINT32:
-         result = ossim::OSAMPLEFORMAT_UINT;
+         result = ossim::SAMPLEFORMAT_UINT;
          break;
 
       case OSSIM_SINT16:
-         result = ossim::OSAMPLEFORMAT_INT;
+         result = ossim::SAMPLEFORMAT_INT;
          break;
 
       case OSSIM_FLOAT32:
       case OSSIM_FLOAT64:
       case OSSIM_NORMALIZED_FLOAT:
       case OSSIM_NORMALIZED_DOUBLE:
-         result = ossim::OSAMPLEFORMAT_IEEEFP;
+         result = ossim::SAMPLEFORMAT_IEEEFP;
          break;
 
       default:

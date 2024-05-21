@@ -259,6 +259,12 @@ public:
    void getCenterGround(ossimKeywordlist& kwl);
 
    /**
+    * @brief Populates keyword list with image center height.
+    * @param kwl Keyword list to populate.
+    */
+   void getCenterHeight(ossimKeywordlist& kwl);
+
+   /**
     * @brief Populates keyword list with ground point for image point.
     *
     * Associated input key values: "img2grd: <x> <y>"
@@ -667,12 +673,42 @@ private:
    void getImageBounds( ossimImageHandler* ih,
                         ossimKeywordlist& kwl ) const;
    void getImageBounds( ossimImageHandler* ih,
-                        ossim_uint32 entry, 
+                        ossim_uint32 entry,
                         ossimKeywordlist& kwl ) const;
 
+   /**
+    * @brief Populates keyword list with image center ground point.
+    * @param ih Pointer to an image handler.
+    * @param kwl Keyword list to populate.
+    */
    void getCenterGround( ossimImageHandler* ih,
                          ossimKeywordlist& kwl ) const;
+
+   /**
+    * @brief Populates keyword list with image center ground point.
+    * @param ih Pointer to an image handler.
+    * @param entry Entry number to select.  Note this is the entry number
+    * from the getEntryList call not a simple zero based entry index.
+    * @param kwl Keyword list to populate.
+    */   
    void getCenterGround( ossimImageHandler* ih,
+                         ossim_uint32 entry, 
+                         ossimKeywordlist& kwl ) const;
+   
+   /**
+    * @brief Populates keyword list with image center height.
+    * @param ih Pointer to an image handler.
+    * @param kwl Keyword list to populate.
+    */
+   void getCenterHeight( ossimImageHandler* ih,
+                         ossimKeywordlist& kwl ) const;
+
+   /**
+    * @brief Populates keyword list with image center height.
+    * @param ih Pointer to an image handler.
+    * @param kwl Keyword list to populate.
+    */
+   void getCenterHeight( ossimImageHandler* ih,
                          ossim_uint32 entry, 
                          ossimKeywordlist& kwl ) const;
 

@@ -223,7 +223,8 @@ public:
    {
       return theTiffPtr;
    }
-#if 0
+   
+#if 1
    /**
     * @brief Method to get the image geometry object associated with this
     * image.
@@ -233,10 +234,15 @@ public:
     *
     * @return ossimImageGeometry* or null if not defined.
     */
-   virtual ossimImageGeometry* getImageGeometry();
-#endif   
+   virtual ossimRefPtr<ossimImageGeometry> getImageGeometry();
+#endif
+   
 protected:
+
+   virtual ossimRefPtr<ossimImageGeometry> getInternalImageGeometry();
+   
    virtual ~ossimTiffTileSource();
+
    /**
     *  Returns true if no errors initializing object.
     *
