@@ -41,7 +41,7 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <algorithm>
 
-using namespace std;
+// using namespace std;
 
 RTTI_DEF1(ossimImageHandler, "ossimImageHandler", ossimImageSource)
 
@@ -84,12 +84,12 @@ thePixelType(OSSIM_PIXEL_IS_POINT)
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimImageHandler::ossimImageHandler() DEBUG:" << std::endl;
+         << "ossimImageHandler::ossimImageHandler() DEBUG:\n";
 #ifdef OSSIM_ID_ENABLED
       ossimNotify(ossimNotifyLevel_DEBUG)
          << "OSSIM_ID:  "
          << OSSIM_ID
-         << std::endl;
+         << "\n";
 #endif      
    }
 
@@ -426,7 +426,7 @@ void ossimImageHandler::getDecimationFactor(ossim_uint32 resLevel, ossimDpt& res
       result.makeNan();
 }
 
-void ossimImageHandler::getDecimationFactors(vector<ossimDpt>& decimations) const
+void ossimImageHandler::getDecimationFactors(std::vector<ossimDpt>& decimations) const
 {
    decimations = theDecimationFactors;
 }
@@ -846,12 +846,14 @@ bool ossimImageHandler::hasOverviews() const
 
 bool ossimImageHandler::openOverview(const ossimFilename& overview_file)
 {
-   bool result = false;
+   static const char MODULE[] = "ossimImageHandler::openOverview(overview_file)";
    if (traceDebug())
    {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimImageHandler::openOverview(overview_file): ...entered!";
+      ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " entered...\n";
    }
+   
+   bool result = false;
+
    closeOverview();
 
    if (overview_file != theImageFile) // Make sure we don't open ourselves.
@@ -905,7 +907,7 @@ bool ossimImageHandler::openOverview(const ossimFilename& overview_file)
                << "\noverview levels: "
                << theOverview->getNumberOfDecimationLevels()
                << "\nlevels: " << getNumberOfDecimationLevels()
-               << endl;
+               << "\n";
          }
          
          //---
@@ -917,10 +919,11 @@ bool ossimImageHandler::openOverview(const ossimFilename& overview_file)
          fireEvent(event);
       }
    }
+
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimImageHandler::openOverview(overview_file): ...leaving!";
+         << MODULE << " exit result: " << (result?"true":"false") << "\n";
    }
    
    return result;
@@ -987,90 +990,93 @@ bool ossimImageHandler::openOverview()
                   << "\noverview levels: "
                   << theOverview->getNumberOfDecimationLevels()
                   << "\nlevels: " << getNumberOfDecimationLevels()
-                  << endl;
+                  << "\n";
             }
-            
-            //---
-            // This is not really a container event; however, using for now.
-            //---
-            ossimContainerEvent event(this,
-                                      OSSIM_EVENT_ADD_OBJECT_ID);
-            event.setObjectList(theOverview.get());
-            fireEvent(event);
+
+            if ( result )
+            {
+               //---
+               // This is not really a container event; however, using for now.
+               //---
+               ossimContainerEvent event(this,
+                                         OSSIM_EVENT_ADD_OBJECT_ID);
+               event.setObjectList(theOverview.get());
+               fireEvent(event);
+            }
             return result;
          }
       } 
    }
-   // 1) ESH 03/2009 -- Use the overview file set e.g. using a .spec file.
-   ossimFilename overviewFilename = getOverviewFile();
 
-   // ossimFilename::exists() currently does not work with s3 url's.
-   if ( overviewFilename.empty() ) // || (overviewFilename.exists() == false) )
+   if ( !result )
    {
-      // 2) Generate the name from image name.
-      overviewFilename = createDefaultOverviewFilename();
-   }
+      // 1) ESH 03/2009 -- Use the overview file set e.g. using a .spec file.
+      ossimFilename overviewFilename = getOverviewFile();
+      // std::cout << "overviewFilename 1: " << overviewFilename << std::endl;
 
-   // ossimFilename::exists() currently does not work with s3 url's.
-   if ( overviewFilename.size() ) 
-   {
-      result = openOverview( overviewFilename );
+      if ( overviewFilename.empty() || (overviewFilename.exists() == false) )
+      {
+         // 2) Generate the default name from image name.
+         overviewFilename = createDefaultOverviewFilename();
+         // std::cout << "overviewFilename 2: " << overviewFilename << std::endl;
 
+         if (overviewFilename.exists() == false)
+         {
+            bool isMultiEntry = getNumberOfEntries() > 1;
+            
+            if ( !isMultiEntry || ( getCurrentEntry() == 0 ) )
+            {
+               //---
+               // 3) dot.ovr
+               // Assuming an existing dot overview belongs to entry zero.
+               //---
+               overviewFilename = getFilename();
+               getFilenameWithThisExt( ossimString(".ovr"), overviewFilename );
+               // std::cout << "overviewFilename 3: " << overviewFilename << std::endl;
+            }
+
+            if (overviewFilename.exists() == false)
+            {
+               //---
+               // 4) For overviews built with gdal.
+               // Examples:
+               // Single entry: foo.tif.ovr
+               // Multi-entry: foo.tif.x.ovr where "x" == one based entry number.
+               // 
+               // Note: Take into account a supplementary dir if any.
+               //---
+               if ( theSupplementaryDirectory.empty() )
+               {
+                  overviewFilename = getFilename();
+               }
+               else
+               {
+                  overviewFilename = theSupplementaryDirectory;
+                  overviewFilename = overviewFilename.dirCat( getFilename().file() );   
+               }
+               
+               if ( isMultiEntry )
+               {
+                  overviewFilename += ".";
+                  // Sample multi-entry data "one" based; hence, the + 1.
+                  overviewFilename += ossimString::toString( getCurrentEntry()+1 );
+               }
+               overviewFilename += ".ovr";
+               // std::cout << "overviewFilename 4: " << overviewFilename << std::endl;
+            }
+         }
+      }
+
+      if ( overviewFilename.exists() )
+      {
+         result = openOverview( overviewFilename );
+      }
+      
       if (traceDebug())
       {
          ossimNotify(ossimNotifyLevel_DEBUG)
             << (result?"Opened ":"Could not open ") << "overview: " << overviewFilename
             << "\n";
-      }
-   }
-   if ( !result )
-   {
-      if (overviewFilename.empty() || (overviewFilename.exists() == false) )
-      {  
-         // 3) For backward compatibility check if single entry and _e0.ovr
-         overviewFilename = getFilenameWithThisExtension(ossimString(".ovr"), true);
-
-         if (overviewFilename.empty() || (overviewFilename.exists() == false) )
-         {
-            //---
-            // 4) For overviews built with gdal.
-            // Examples:
-            // Single entry: foo.tif.ovr
-            // Multi-entry: foo.tif.x.ovr where "x" == one based entry number.
-            // 
-            // Note: Take into account a supplementary dir if any.
-            //---
-            if ( theSupplementaryDirectory.empty() )
-            {
-               overviewFilename = getFilename();
-            }
-            else
-            {
-               overviewFilename = theSupplementaryDirectory;
-               overviewFilename = overviewFilename.dirCat( getFilename().file() );
-   
-            }
-
-            if ( getNumberOfEntries() > 1 )
-            {
-               overviewFilename += ".";
-               // Sample multi-entry data "one" based; hence, the + 1.
-               overviewFilename += ossimString::toString( getCurrentEntry()+1 );
-            }
-            overviewFilename += ".ovr";
-         }
-      }
-   
-      if ( overviewFilename.exists() )
-      {
-         result = openOverview( overviewFilename );
-
-         if (traceDebug())
-         {
-            ossimNotify(ossimNotifyLevel_DEBUG)
-               << (result?"Opened ":"Could not open ") << "overview: " << overviewFilename
-               << "\n";
-         }
       }
    }
 
@@ -1231,7 +1237,7 @@ bool ossimImageHandler::isValidRLevel(ossim_uint32 resLevel) const
    return result;
 }
 
-void ossimImageHandler::getValidImageVertices(vector<ossimIpt>& validVertices,
+void ossimImageHandler::getValidImageVertices(std::vector<ossimIpt>& validVertices,
                                               ossimVertexOrdering ordering,
                                               ossim_uint32 resLevel) const
 {
