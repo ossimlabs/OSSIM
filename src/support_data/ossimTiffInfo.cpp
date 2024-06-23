@@ -30,32 +30,17 @@
 #include <ossim/projection/ossimProjection.h>
 #include <ossim/projection/ossimEpsgProjectionFactory.h>
 #include <ossim/base/ossimStreamFactoryRegistry.h>
+#include <ossim/base/ossimTiffPhotoInterpLut.h>
 #include <ossim/support_data/ossimQuickbirdMetaData.h>
 #include <ossim/support_data/ossimPleiadesMetaData.h>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
-#include <ossim/base/ossimIoStream.h>
 
 // Static trace for debugging
 static ossimTrace traceDebug("ossimTiffInfo:debug");
 static ossimTrace traceDump("ossimTiffInfo:dump"); // This will dump offsets.
-
-static const std::string PHOTO_INTERP[] =
-    {
-        "MINISWHITE",
-        "MINISBLACK",
-        "RGB",
-        "PALETTE",
-        "MASK",
-        "SEPARATED",
-        "YCBCR",
-        "CIELAB",
-        "ICCLAB",
-        "ITULAB"
-
-};
 
 static const std::string ANGULAR_UNITS_KW = "angular_units";
 static const std::string CENTER_LATITUDE__KW = "center_latitude";
@@ -1667,565 +1652,598 @@ std::ostream &ossimTiffInfo::print(std::ostream &out,
 {
    switch (tag)
    {
-   case ossim::TIFFTAG_SUBFILETYPE: // tag 254
-   {
-      out << prefix << "sub_file_type: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_IMAGEWIDTH: // tag 256
-   {
-      out << prefix << IMAGE_WIDTH_KW << ": ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_IMAGELENGTH: // tag 257
-   {
-      out << prefix << IMAGE_LENGTH_KW << ": ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_BITSPERSAMPLE: // tag 258
-   {
-      out << prefix << "bits_per_sample: ";
-      if (count == 1)
+      case ossim::TIFFTAG_SUBFILETYPE: // tag 254
       {
+         out << prefix << "sub_file_type: ";
          printValue(out, type, valueArray);
+         break;
       }
-      else if (valueArray)
+      case ossim::TIFFTAG_IMAGEWIDTH: // tag 256
       {
+         out << prefix << IMAGE_WIDTH_KW << ": ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_IMAGELENGTH: // tag 257
+      {
+         out << prefix << IMAGE_LENGTH_KW << ": ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_BITSPERSAMPLE: // tag 258
+      {
+         out << prefix << "bits_per_sample: ";
+         if (count == 1)
+         {
+            printValue(out, type, valueArray);
+         }
+         else if (valueArray)
+         {
+            printArray(out, type, count, valueArray);
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_COMPRESSION: // tag 259
+      {
+         if ((count == 1) && (type == ossim::TIFF_SHORT))
+         {
+            out << prefix << "compression: ";
+
+            ossim_uint16 s;
+            getArrayValue(s, valueArray, 0);
+            out << s << "\n";
+
+            
+            out << prefix << "compression_string: ";
+            if (s == ossim::COMPRESSION_NONE )
+            {
+               out << "none\n";
+            }
+            else if ( s == ossim::COMPRESSION_CCITT_2 )
+            {
+               out << "ccitt_2\n";
+            }
+            else if ( s == ossim::COMPRESSION_CCITT_3 )
+            {
+               out << "ccitt_3\n";
+            }
+            else if ( s == ossim::COMPRESSION_CCITT_4 )
+            {
+               out << "ccitt_4\n";
+            }
+            else if ( s == ossim::COMPRESSION_DEFLATE )
+            {
+               out << "deflate\n";
+            }
+            else if ( s == ossim::COMPRESSION_LZW )
+            {
+               out << "lzw\n";
+            }
+            
+            else if ( s == ossim::COMPRESSION_LZW )
+            {
+               out << "lzw\n";
+            }
+            else if ( s == ossim::COMPRESSION_OJPEG )
+            {
+               out << "ojpeg\n";
+            }
+            else if ( s == ossim::COMPRESSION_JPEG )
+            {
+               out << "jpeg\n";
+            }
+            else if ( s == ossim::COMPRESSION_ADOBE_DEFLATE )
+            {
+               out << "adobe_deflate\n";
+            }
+            else if ( s == ossim::COMPRESSION_PACKBIT )
+            {
+               out << "packits\n";
+            }
+            else
+            {
+               out << "unknown\n";
+            }
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_PHOTOMETRIC: // tag 262
+      {
+         out << prefix << "photo_interpretation: ";
+
+         if ((count == 1) && (type == ossim::TIFF_SHORT))
+         {
+            ossim_uint16 s;
+            getArrayValue(s, valueArray, 0);
+            out << s << "\n";
+
+            ossimTiffPhotoInterpLut lut;
+            out << prefix << "photo_interpretation_string: "
+                << lut.getEntryString( s ) << "\n";
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_FILLORDER: // tag 266
+      {
+         if ((count == 1) && (type == ossim::TIFF_SHORT))
+         {
+            out << prefix << "fill_order: ";
+            ossim_uint16 s;
+            getArrayValue(s, valueArray, 0);
+            out << s << "\n";
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_IMAGEDESCRIPTION: // tag 270
+      {
+         out << prefix << "image_description: ";
          printArray(out, type, count, valueArray);
+         break;
       }
-      break;
-   }
 
-   case ossim::TIFFTAG_COMPRESSION: // tag 259
-   {
-      if ((count == 1) && (type == ossim::TIFF_SHORT))
+      case ossim::TIFFTAG_MAKE: // tag 271
       {
-         out << prefix << "compression: ";
-
-         ossim_uint16 s;
-         getArrayValue(s, valueArray, 0);
-
-         out << s << "\n";
-         out << prefix << "compression_flag: ";
-         if (s == 1)
-         {
-            out << "false\n";
-         }
-         else
-         {
-            out << "true\n";
-         }
+         out << prefix << "make: ";
+         printArray(out, type, count, valueArray);
+         break;
       }
-      break;
-   }
 
-   case ossim::TIFFTAG_PHOTOMETRIC: // tag 262
-   {
-      out << prefix << "photo_interpretation: ";
-
-      if ((count == 1) && (type == ossim::TIFF_SHORT))
+      case ossim::TIFFTAG_MODEL: // tag 272
       {
-         ossim_uint16 s;
-         getArrayValue(s, valueArray, 0);
-         if (s < ossim::PHOTO_LAST)
-         {
-            out << PHOTO_INTERP[s] << "\n";
-         }
-         else if (s == ossim::PHOTO_LOGL)
-         {
-            out << "LOGL\n";
-         }
-         else if (s == ossim::PHOTO_LOGLUV)
-         {
-            out << "LOGLUV \n";
-         }
-         else
-         {
-            out << "range error!\n";
-         }
+         out << prefix << "model: ";
+         printArray(out, type, count, valueArray);
+         break;
       }
-      break;
-   }
 
-   case ossim::TIFFTAG_FILLORDER: // tag 266
-   {
-      if ((count == 1) && (type == ossim::TIFF_SHORT))
+      case ossim::TIFFTAG_STRIPOFFSETS: // tag 273
       {
-         out << prefix << "fill_order: ";
-         ossim_uint16 s;
-         getArrayValue(s, valueArray, 0);
-         out << s << "\n";
+         if (traceDump())
+         {
+            out << prefix << "bytes_per_strip: ";
+
+            if (count == 1)
+            {
+               printValue(out, type, valueArray);
+            }
+            else
+            {
+               printArray(out, type, count, valueArray);
+            }
+         }
+         break;
       }
-      break;
-   }
-
-   case ossim::TIFFTAG_IMAGEDESCRIPTION: // tag 270
-   {
-      out << prefix << "image_description: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_MAKE: // tag 271
-   {
-      out << prefix << "make: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_MODEL: // tag 272
-   {
-      out << prefix << "model: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_STRIPOFFSETS: // tag 273
-   {
-      if (traceDump())
+      case ossim::TIFFTAG_ORIENTATION: // tag 274
       {
-         out << prefix << "bytes_per_strip: ";
-
-         if (count == 1)
-         {
-            printValue(out, type, valueArray);
-         }
-         else
-         {
-            printArray(out, type, count, valueArray);
-         }
+         ossim_uint16 code;
+         getArrayValue(code, valueArray, 0);
+         printOrientation(out, prefix, code);
+         break;
       }
-      break;
-   }
-   case ossim::TIFFTAG_ORIENTATION: // tag 274
-   {
-      ossim_uint16 code;
-      getArrayValue(code, valueArray, 0);
-      printOrientation(out, prefix, code);
-      break;
-   }
 
-   case ossim::TIFFTAG_SAMPLESPERPIXEL: // tag 277
-   {
-      out << prefix << "samples_per_pixel: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_ROWSPERSTRIP: // tag 278
-   {
-      out << prefix << "rows_per_strip: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_STRIPBYTECOUNTS: // tag 279
-   {
-      if (traceDump())
+      case ossim::TIFFTAG_SAMPLESPERPIXEL: // tag 277
       {
-         out << prefix << "bytes_per_strip: ";
-
-         if (count == 1)
-         {
-            printValue(out, type, valueArray);
-         }
-         else
-         {
-            printArray(out, type, count, valueArray);
-         }
+         out << prefix << "samples_per_pixel: ";
+         printValue(out, type, valueArray);
+         break;
       }
-      break;
-   }
 
-   case ossim::TIFFTAG_MINSAMPLEVALUE: // tag 280
-   {
-      out << prefix << "min_sample_value: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_MAXSAMPLEVALUE: // tag 281
-   {
-      out << prefix << "max_sample_value: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_XRESOLUTION: // tag 282
-   {
-      out << prefix << "xresolution: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_YRESOLUTION: // tag 283
-   {
-      out << prefix << "yresolution: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_PLANARCONFIG: // tag 284
-   {
-      if ((count == 1) && (type == ossim::TIFF_SHORT))
+      case ossim::TIFFTAG_ROWSPERSTRIP: // tag 278
       {
-         out << prefix << "planar_configuration: ";
+         out << prefix << "rows_per_strip: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_STRIPBYTECOUNTS: // tag 279
+      {
+         if (traceDump())
+         {
+            out << prefix << "bytes_per_strip: ";
+
+            if (count == 1)
+            {
+               printValue(out, type, valueArray);
+            }
+            else
+            {
+               printArray(out, type, count, valueArray);
+            }
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_MINSAMPLEVALUE: // tag 280
+      {
+         out << prefix << "min_sample_value: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_MAXSAMPLEVALUE: // tag 281
+      {
+         out << prefix << "max_sample_value: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_XRESOLUTION: // tag 282
+      {
+         out << prefix << "xresolution: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_YRESOLUTION: // tag 283
+      {
+         out << prefix << "yresolution: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_PLANARCONFIG: // tag 284
+      {
+         if ((count == 1) && (type == ossim::TIFF_SHORT))
+         {
+            out << prefix << "planar_configuration: ";
+            ossim_uint16 v;
+            getArrayValue(v, valueArray, 0);
+            out << v << "\n";
+            out << prefix << "planar_configuration_string: "; 
+            if (v == 1)
+            {
+               out << "single image plane\n";
+            }
+            else if (v == 2)
+            {
+               out << "separate image planes\n";
+            }
+            else
+            {
+               out << "unknown planar value!\n";
+            }
+         }
+         break;
+      }
+
+      case ossim::TIFFTAG_RESOLUTIONUNIT: // tag 296
+      {
+         out << prefix << "resolution_units: ";
          ossim_uint16 v;
          getArrayValue(v, valueArray, 0);
-         if (v == 1)
+         if (v == 2)
          {
-            out << "single image plane\n";
+            out << "inch\n";
          }
-         else if (v == 2)
+         else if (v == 3)
          {
-            out << "separate image planes\n";
-         }
-         else
-         {
-            out << "unknown planar value!\n";
-         }
-      }
-      break;
-   }
-
-   case ossim::TIFFTAG_RESOLUTIONUNIT: // tag 296
-   {
-      out << prefix << "resolution_units: ";
-      ossim_uint16 v;
-      getArrayValue(v, valueArray, 0);
-      if (v == 2)
-      {
-         out << "inch\n";
-      }
-      else if (v == 3)
-      {
-         out << "cm\n";
-      }
-      else
-      {
-         out << "none\n";
-      }
-      break;
-   }
-
-   case ossim::TIFFTAG_PAGENUMBER: // tag 297
-   {
-      if ((count == 2) && (type == ossim::TIFF_SHORT))
-      {
-         out << prefix << "page_number: ";
-         ossim_uint16 s;
-         getArrayValue(s, valueArray, 0);
-         out << s << "\n";
-         out << prefix << "total_pages: ";
-         getArrayValue(s, valueArray, 1);
-         out << s << "\n";
-      }
-      break;
-   }
-
-   case ossim::TIFFTAG_SOFTWARE: // tag 305
-   {
-      out << prefix << "software: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_DATETIME: // tag 306
-   {
-      out << prefix << "date_time: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_ARTIST: // tag 315
-   {
-      out << prefix << "artist: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_PREDICTOR: // tag 317
-   {
-      out << prefix << "predictor: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_WHITEPOINT: // tag 318
-   {
-      out << prefix << "white_point: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_PRIMARYCHROMATICITIES: // tag 319
-   {
-      out << prefix << "primary_chromaticities: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_COLORMAP: // tag 320
-   {
-      out << prefix << "colormap: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_TILEWIDTH: // tag 322
-   {
-      out << prefix << "tile_width: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_TILELENGTH: // tag 323
-   {
-      out << prefix << "tile_length: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_TILEOFFSETS: // tag 324
-   {
-      if (traceDump())
-      {
-         out << prefix << "tile_offsets: ";
-         if (count == 1)
-         {
-            printValue(out, type, valueArray);
+            out << "cm\n";
          }
          else
          {
-            printArray(out, type, count, valueArray);
+            out << "none\n";
          }
-      }
-      break;
-   }
-   case ossim::TIFFTAG_TILEBYTECOUNTS: // tag 325
-   {
-      if (traceDump())
-      {
-         out << prefix << "tile_byte_counts: ";
-         if (count == 1)
-         {
-            printValue(out, type, valueArray);
-         }
-         else
-         {
-            printArray(out, type, count, valueArray);
-         }
-      }
-      break;
-   }
-   case ossim::TIFFTAG_SUBIFD: // tag 330
-   {
-      if ((count == 1) && (type == ossim::TIFF_IFD8))
-      {
-         out << prefix << "subimage_descriptor: ";
-         ossim_uint64 v;
-         getArrayValue(v, valueArray, 0);
-         out << v << "\n";
-      }
-      else
-      {
-         out << prefix << "tag 330 unhandled condition.\n";
-      }
-      break;
-   }
-   case ossim::TIFFTAG_EXTRASAMPLES: // tag 338
-   {
-      out << prefix << "extra_samples: ";
-      ossim_uint16 v;
-      getArrayValue(v, valueArray, 0);
-      switch (v)
-      {
-      case 1:
-      {
-         out << "associated_alpha_data\n";
          break;
       }
-      case 2:
-      {
-         out << "unassociated_alpha_data\n";
-         break;
-      }
-      default:
-      {
-         out << "unspecified_data\n";
-         break;
-      }
-      }
-      break;
-   }
-   case ossim::TIFFTAG_SAMPLEFORMAT: // tag 339
-   {
-      out << prefix << "sample_format: ";
 
-      if (count == 1)
+      case ossim::TIFFTAG_PAGENUMBER: // tag 297
       {
-         printValue(out, type, valueArray);
+         if ((count == 2) && (type == ossim::TIFF_SHORT))
+         {
+            out << prefix << "page_number: ";
+            ossim_uint16 s;
+            getArrayValue(s, valueArray, 0);
+            out << s << "\n";
+            out << prefix << "total_pages: ";
+            getArrayValue(s, valueArray, 1);
+            out << s << "\n";
+         }
+         break;
       }
-      else if (valueArray)
+
+      case ossim::TIFFTAG_SOFTWARE: // tag 305
       {
+         out << prefix << "software: ";
          printArray(out, type, count, valueArray);
+         break;
       }
-      for (ossim_uint64 i = 0; i < count; ++i)
-      {
-         std::ostringstream s;
-         s << "sample_format_string";
-         if (count > 1)
-         {
-            s << i;
-         }
-         out << prefix << s.str() << ": ";
 
+      case ossim::TIFFTAG_DATETIME: // tag 306
+      {
+         out << prefix << "date_time: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_ARTIST: // tag 315
+      {
+         out << prefix << "artist: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_PREDICTOR: // tag 317
+      {
+         out << prefix << "predictor: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_WHITEPOINT: // tag 318
+      {
+         out << prefix << "white_point: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_PRIMARYCHROMATICITIES: // tag 319
+      {
+         out << prefix << "primary_chromaticities: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_COLORMAP: // tag 320
+      {
+         out << prefix << "colormap: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_TILEWIDTH: // tag 322
+      {
+         out << prefix << "tile_width: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_TILELENGTH: // tag 323
+      {
+         out << prefix << "tile_length: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_TILEOFFSETS: // tag 324
+      {
+         if (traceDump())
+         {
+            out << prefix << "tile_offsets: ";
+            if (count == 1)
+            {
+               printValue(out, type, valueArray);
+            }
+            else
+            {
+               printArray(out, type, count, valueArray);
+            }
+         }
+         break;
+      }
+      case ossim::TIFFTAG_TILEBYTECOUNTS: // tag 325
+      {
+         if (traceDump())
+         {
+            out << prefix << "tile_byte_counts: ";
+            if (count == 1)
+            {
+               printValue(out, type, valueArray);
+            }
+            else
+            {
+               printArray(out, type, count, valueArray);
+            }
+         }
+         break;
+      }
+      case ossim::TIFFTAG_SUBIFD: // tag 330
+      {
+         if ((count == 1) && (type == ossim::TIFF_IFD8))
+         {
+            out << prefix << "subimage_descriptor: ";
+            ossim_uint64 v;
+            getArrayValue(v, valueArray, 0);
+            out << v << "\n";
+         }
+         else
+         {
+            out << prefix << "tag 330 unhandled condition.\n";
+         }
+         break;
+      }
+      case ossim::TIFFTAG_EXTRASAMPLES: // tag 338
+      {
+         out << prefix << "extra_samples: ";
          ossim_uint16 v;
-         getArrayValue(v, valueArray, i);
+         getArrayValue(v, valueArray, 0);
          switch (v)
          {
-         case ossim::SAMPLEFORMAT_UINT:
-            out << "unsigned integer data\n";
-            break;
-         case ossim::SAMPLEFORMAT_INT:
-            out << "signed integer data\n";
-            break;
-         case ossim::SAMPLEFORMAT_IEEEFP:
-            out << "IEEE floating point data\n";
-            break;
-         case ossim::SAMPLEFORMAT_COMPLEXINT:
-            out << "complex signed int\n";
-            break;
-         case ossim::SAMPLEFORMAT_COMPLEXIEEEFP:
-            out << "complex ieee floating\n";
-            break;
-         case ossim::SAMPLEFORMAT_VOID:
-         default:
-            out << "untyped data\n";
-            break;
+            case 1:
+            {
+               out << "associated_alpha_data\n";
+               break;
+            }
+            case 2:
+            {
+               out << "unassociated_alpha_data\n";
+               break;
+            }
+            default:
+            {
+               out << "unspecified_data\n";
+               break;
+            }
          }
+         break;
       }
-      break;
-   }
-   case ossim::TIFFTAG_SMINSAMPLEVALUE: // tag 340
-   {
-      out << prefix << "smin_sample_value: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_SMAXSAMPLEVALUE: // tag 341
-   {
-      out << prefix << "smax_sample_value: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_YCBCRSUBSAMPLING:
-   {
-      out << prefix << "ycbcr_sub_sampling: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_YCBCRPOSITIONING:
-   {
-      out << prefix << "ycbcr_positioning: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_REFERENCEBLACKWHITE:
-   {
-      out << prefix << "reference_black_white: ";
-      printValue(out, type, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_XMLPACKET: // tag 700
-   {
-      if (traceDebug())
+      case ossim::TIFFTAG_SAMPLEFORMAT: // tag 339
       {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-             << prefix << "xml: ";
-         printArray(ossimNotify(ossimNotifyLevel_DEBUG),
-                    ossim::TIFF_BYTE, count, valueArray);
+         out << prefix << "sample_format: ";
+
+         if (count == 1)
+         {
+            printValue(out, type, valueArray);
+         }
+         else if (valueArray)
+         {
+            printArray(out, type, count, valueArray);
+         }
+         for (ossim_uint64 i = 0; i < count; ++i)
+         {
+            std::ostringstream s;
+            s << "sample_format_string";
+            if (count > 1)
+            {
+               s << i;
+            }
+            out << prefix << s.str() << ": ";
+
+            ossim_uint16 v;
+            getArrayValue(v, valueArray, i);
+            switch (v)
+            {
+               case ossim::SAMPLEFORMAT_UINT:
+                  out << "unsigned integer data\n";
+                  break;
+               case ossim::SAMPLEFORMAT_INT:
+                  out << "signed integer data\n";
+                  break;
+               case ossim::SAMPLEFORMAT_IEEEFP:
+                  out << "IEEE floating point data\n";
+                  break;
+               case ossim::SAMPLEFORMAT_COMPLEXINT:
+                  out << "complex signed int\n";
+                  break;
+               case ossim::SAMPLEFORMAT_COMPLEXIEEEFP:
+                  out << "complex ieee floating\n";
+                  break;
+               case ossim::SAMPLEFORMAT_VOID:
+               default:
+                  out << "untyped data\n";
+                  break;
+            }
+         }
+         break;
       }
-      printXmpMetadata(out, prefix, count, valueArray);
-      break;
-   }
-
-   case ossim::TIFFTAG_COPYRIGHT: // tag 33432
-   {
-      out << prefix << "copyright: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::MODEL_PIXEL_SCALE_TAG: // tag 33550
-   {
-      out << prefix << MODEL_PIXEL_SCALE_KW << ": ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::MODEL_TIE_POINT_TAG: // tag 33992
-   {
-      out << prefix << MODEL_TIE_POINT_KW << ": ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::MODEL_TRANSFORM_TAG: // tag 34264
-   {
-      out << prefix << MODEL_TRANSFORM_KW << ": ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::TIFFTAG_PHOTOSHOP: // tag 34377
-   {
-      out << prefix << "photoshop_image_resource_blocks: found\n";
-      break;
-   }
-   case ossim::GEO_DOUBLE_PARAMS_TAG: // tag 34736
-   {
-      out << prefix << "double_params: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::GEO_ASCII_PARAMS_TAG: // tag 34737
-   {
-      out << prefix << "ascii_params: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-   case ossim::GDAL_METADATA_TAG: // tag  42112
-   {
-      printGdalMetadata(out, prefix, count, valueArray);
-      break;
-   }
-   case ossim::GDAL_NODATA: // tag 42113
-   {
-      out << prefix << "gdal_nodata: ";
-      printArray(out, type, count, valueArray);
-      break;
-   }
-
-   case ossim::RPC_COEFFICIENT_TAG: // tag 50844
-   {
-      printRpcs(out, prefix, type, count, valueArray);
-      break;
-   }
-
-   default:
-   {
-      out << prefix << "unhandled_tag: " << tag << "\n";
-      if (traceDebug())
+      case ossim::TIFFTAG_SMINSAMPLEVALUE: // tag 340
       {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-             << "generic:"
-             << "\ntag[" << tagIdx << "]:         " << tag
-             << "\ntype:                " << type
-             << "\ncount:        " << count
-             << "\narray size in bytes: " << arraySizeInBytes
-             << "\n";
+         out << prefix << "smin_sample_value: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_SMAXSAMPLEVALUE: // tag 341
+      {
+         out << prefix << "smax_sample_value: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_YCBCRSUBSAMPLING:
+      {
+         out << prefix << "ycbcr_sub_sampling: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_YCBCRPOSITIONING:
+      {
+         out << prefix << "ycbcr_positioning: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_REFERENCEBLACKWHITE:
+      {
+         out << prefix << "reference_black_white: ";
+         printValue(out, type, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_XMLPACKET: // tag 700
+      {
+         if (traceDebug())
+         {
+            ossimNotify(ossimNotifyLevel_DEBUG)
+               << prefix << "xml: ";
+            printArray(ossimNotify(ossimNotifyLevel_DEBUG),
+                       ossim::TIFF_BYTE, count, valueArray);
+         }
+         printXmpMetadata(out, prefix, count, valueArray);
+         break;
+      }
+
+      case ossim::TIFFTAG_COPYRIGHT: // tag 33432
+      {
+         out << prefix << "copyright: ";
          printArray(out, type, count, valueArray);
+         break;
       }
-      break;
-   }
+      case ossim::MODEL_PIXEL_SCALE_TAG: // tag 33550
+      {
+         out << prefix << MODEL_PIXEL_SCALE_KW << ": ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+      case ossim::MODEL_TIE_POINT_TAG: // tag 33992
+      {
+         out << prefix << MODEL_TIE_POINT_KW << ": ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+      case ossim::MODEL_TRANSFORM_TAG: // tag 34264
+      {
+         out << prefix << MODEL_TRANSFORM_KW << ": ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+      case ossim::TIFFTAG_PHOTOSHOP: // tag 34377
+      {
+         out << prefix << "photoshop_image_resource_blocks: found\n";
+         break;
+      }
+      case ossim::GEO_DOUBLE_PARAMS_TAG: // tag 34736
+      {
+         out << prefix << "double_params: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+      case ossim::GEO_ASCII_PARAMS_TAG: // tag 34737
+      {
+         out << prefix << "ascii_params: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+      case ossim::GDAL_METADATA_TAG: // tag  42112
+      {
+         printGdalMetadata(out, prefix, count, valueArray);
+         break;
+      }
+      case ossim::GDAL_NODATA: // tag 42113
+      {
+         out << prefix << "gdal_nodata: ";
+         printArray(out, type, count, valueArray);
+         break;
+      }
+
+      case ossim::RPC_COEFFICIENT_TAG: // tag 50844
+      {
+         printRpcs(out, prefix, type, count, valueArray);
+         break;
+      }
+
+      default:
+      {
+         out << prefix << "unhandled_tag: " << tag << "\n";
+         if (traceDebug())
+         {
+            ossimNotify(ossimNotifyLevel_DEBUG)
+               << "generic:"
+               << "\ntag[" << tagIdx << "]:         " << tag
+               << "\ntype:                " << type
+               << "\ncount:        " << count
+               << "\narray size in bytes: " << arraySizeInBytes
+               << "\n";
+            printArray(out, type, count, valueArray);
+         }
+         break;
+      }
 
    } // end of switch on tag...
 

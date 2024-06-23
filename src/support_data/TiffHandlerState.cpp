@@ -1046,6 +1046,13 @@ ossim_int32 ossim::TiffHandlerState::getPlanarConfig(ossim_int32 directory) cons
   ossim_int32 result = 0;
   if (getValue(tempStr, directory, "planar_configuration"))
   {
+     //---
+     // ossimTiffInfo Key changed:
+     // planar_configuration: contains integer code from tiff file
+     // planar_configuration_string: is string (drb)
+     //---
+     result = tempStr.toInt32();
+#if 0
     if (tempStr.contains("separate"))
     {
       result = PLANARCONFIG_SEPARATE;
@@ -1054,6 +1061,7 @@ ossim_int32 ossim::TiffHandlerState::getPlanarConfig(ossim_int32 directory) cons
     {
       result = PLANARCONFIG_CONTIG;
     }
+#endif
   }
   return result;
 }
@@ -1078,6 +1086,13 @@ ossim_int32 ossim::TiffHandlerState::getPhotoInterpretation(ossim_int32 director
   ossim_int32 result = 0;
   if (getValue(tempStr, directory, "photo_interpretation"))
   {
+     //---
+     // ossimTiffInfo key changed:
+     // photo_interpretation: contains integer code from tiff file
+     // photo_interpretation_string: is string (drb)
+     //---
+     result = tempStr.toInt32();
+#if 0
     if (tempStr.contains("MINISWHITE"))
     {
       result = PHOTOMETRIC_MINISWHITE;
@@ -1126,6 +1141,7 @@ ossim_int32 ossim::TiffHandlerState::getPhotoInterpretation(ossim_int32 director
     {
       result = PHOTOMETRIC_LOGLUV;
     }
+#endif
   }
 
   return result;

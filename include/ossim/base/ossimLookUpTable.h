@@ -14,15 +14,13 @@
 //  $Id: ossimLookUpTable.h 19448 2011-04-26 15:15:07Z dburken $
 
 #ifndef ossimLookUpTable_HEADER
-#define ossimLookUpTable_HEADER
-
-#include <vector>
+#define ossimLookUpTable_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimKeyword.h>
-
 #include <initializer_list>
+#include <vector>
 
 class ossimKeywordlist;
 

@@ -1,20 +1,18 @@
-//*******************************************************************
+//---
 //
-// License:  See top level LICENSE.txt file.
+// License: MIT
 // 
 // Author:  David Burken (dburken@imagelinks.com)
 //
 // Description:
 //
-// Contains class declaration for 
-//*******************************************************************
-//  $Id: ossimLookUpTable.cpp 19448 2011-04-26 15:15:07Z dburken $
-
-#include <iostream>
-using namespace std;
+// Contains class declaration for ossimLookupTable. 
+//---
+// $Id$
 
 #include <ossim/base/ossimLookUpTable.h>
 #include <ossim/base/ossimKeywordlist.h>
+#include <iostream>
 
 ossimLookUpTable::ossimLookUpTable(const std::initializer_list<ossimString>& stringInitializer)
 {

@@ -178,11 +178,10 @@ namespace ossim
       PHOTO_MASK       = 4, // $holdout mask
       PHOTO_SEPARATED  = 5, // !color separations
       PHOTO_YCBCR      = 6, // !CCIR 601
-      PHOTO_CIELAB     = 7, // !1976 CIE L*a*b*
+      PHOTO_CIELAB     = 8, // !1976 CIE L*a*b*
       PHOTO_ICCLAB     = 9,
       PHOTO_ITULAB     = 10,
-      PHOTO_LAST       = 11, // this is here for range checking
-
+      PHOTO_CFA        = 32803,
       PHOTO_LOGL       = 32844,
       PHOTO_LOGLUV     = 32845
    };
