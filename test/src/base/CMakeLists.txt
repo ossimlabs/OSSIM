@@ -26,6 +26,7 @@ OSSIM_SETUP_APPLICATION(ossim-string-test INSTALL COMMAND_LINE COMPONENT_NAME os
 OSSIM_SETUP_APPLICATION(ossim-thin-plate-spline-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-thin-plate-spline-test.cpp)
 OSSIM_SETUP_APPLICATION(ossim-threaded-logfile-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-threaded-logfile-test.cpp)
 OSSIM_SETUP_APPLICATION(ossim-threaded-polyarea2d-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-threaded-polyarea2d-test.cpp)
+OSSIM_SETUP_APPLICATION(ossim-tiff-photo-interp-lut-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-tiff-photo-interp-lut-test.cpp)
 OSSIM_SETUP_APPLICATION(ossim-visitor-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-visitor-test.cpp)
 OSSIM_SETUP_APPLICATION(ossim-xml-test INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-xml-test.cpp)
 
