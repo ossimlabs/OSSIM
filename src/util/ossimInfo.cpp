@@ -184,7 +184,7 @@ void ossimInfo::setUsage(ossimArgumentParser& ap)
 
    au->addCommandLineOption("-h", "Display this information");
 
-   au->addCommandLineOption("--height", "<latitude-in-degrees> <longitude-in-degrees> Returns the MSL and ellipoid height given a latitude longitude position.");
+   au->addCommandLineOption("--height", "<latitude-in-degrees> <longitude-in-degrees> Returns the MSL and ellipsoid height given a latitude longitude position.");
    
    au->addCommandLineOption("-i", "Will print out the general image information.");
 
@@ -232,7 +232,7 @@ void ossimInfo::setUsage(ossimArgumentParser& ap)
    au->addCommandLineOption("--up-is-up-ipt", "Computes up angle given full res image point: <x> <y>");
    au->addCommandLineOption("-v", "Overwrite existing geometry.");
 
-   au->addCommandLineOption("-V or --vesion", "Version of code, e.g. 1.8.20");
+   au->addCommandLineOption("-V or --version", "Version of code, e.g. 1.8.20");
 
    au->addCommandLineOption("--writer-props", "Prints writers and properties.");
 
@@ -248,7 +248,7 @@ void ossimInfo::setUsage(ossimArgumentParser& ap)
          << "    ossim-info -p ./myfile.tif\n"
          << "      prints out only image projection information\n\n"
          << "    ossim-info -p -s wge ./myfile.tif\n"
-         << "      prints out only image projection information and shifts to wgs84\n\n"
+         << "      prints out only image projection information and shifts to WGS 84\n\n"
          << "    ossim-info -p -i ./myfile.tif\n"
          << "      prints out both image and projection information\n\n"
          << "    ossim-info -p -i ./myfile.tif -o ./myfile.geom\n"
@@ -259,12 +259,12 @@ void ossimInfo::setUsage(ossimArgumentParser& ap)
          << "    ossim-info -f XML ./myfile.tif\n"
          << "      prints out image and projection information as an XML document\n\n"
          << "    ossim-info -d myfile.ntf\n"
-         << "      Dumps all data available, in this case, all nitf tags, from file.\n\n"
+         << "      Dumps all data available, in this case, all NITF tags, from file.\n\n"
          << "    ossim-info -d a.toc\n"
-         << "      Dumps all data available, in this case, all nitf and rpf tags, from file.\n\n"
+         << "      Dumps all data available, in this case, all NITF and rpf tags, from file.\n\n"
          << "    ossim-info --dno a.toc\n"
          << "      \"dno\" for \"dump no overviews\" Dumps all data available,\n"
-         << "       in this case, all nitf and rpf tags, from file ignoring overviews.\n\n"
+         << "       in this case, all NITF and RPF tags, from file ignoring overviews.\n\n"
          << "    ossim-info -d -i -p myfile.ntf\n"
          << "      Typical usage case, i.e. do a dump of tags and print out image and\n"
          << "      projection information.\n\n"
