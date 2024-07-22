@@ -450,7 +450,7 @@ bool ossimImageElevationDatabase::loadMapFromKwl()
             {
                prefix = basePrefix + ossimString::toString( index ).string() + dot;
                ossimImageElevationFileEntry entry;
-               if ( entry.loadState( kwl, prefix ) == true )
+               if ( entry.loadState( kwl, prefix, m_connectionString ) == true )
                {
                   // Add the file.
                   m_entryMap.insert( std::make_pair( m_lastMapKey++, entry ) );
@@ -596,7 +596,7 @@ void ossimImageElevationDatabase::ossimImageElevationFileEntry::saveState(
 }
 
 bool ossimImageElevationDatabase::ossimImageElevationFileEntry::loadState(
-   const ossimKeywordlist& kwl, const std::string& prefix )
+   const ossimKeywordlist& kwl, const std::string& prefix, const ossimFilename& connectionString )
 {
    bool result = false;
    std::string key = ossimKeywordNames::FILE_KW;
@@ -604,6 +604,11 @@ bool ossimImageElevationDatabase::ossimImageElevationFileEntry::loadState(
    if ( value.size() )
    {
       m_file = value;
+      // enable paths relative to connectionString
+      if ( m_file[0] == '.' )
+      {
+         m_file = connectionString.dirCat( m_file );
+      }
 
       key = "grect";
       value = kwl.findKey( prefix, key );

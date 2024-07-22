@@ -180,7 +180,7 @@ private:
 
       void saveState( ossimKeywordlist& kwl, const std::string& prefix ) const;
 
-      bool loadState(const ossimKeywordlist& kwl, const std::string& prefix ); 
+      bool loadState(const ossimKeywordlist& kwl, const std::string& prefix, const ossimFilename& base );
 
       /** file name */
       ossimFilename m_file;
