@@ -674,10 +674,26 @@ ossimRefPtr<ossimMultiResLevelHistogram> ossimImageHandler::getImageHistogram() 
    ossimRefPtr<ossimMultiResLevelHistogram> histogram = 0;
    if ( isOpen() )
    {
-      ossimFilename histoFile = getFilenameWithThisExtension(ossimString(".his"));
       histogram = new ossimMultiResLevelHistogram();
-      if ( histogram->importHistogram(histoFile) == false )
+      
+      ossimFilename histoFile = getFilenameWithThisExtension(ossimString(".his"));
+      bool openedHistogram = histogram->importHistogram(histoFile);
+      if ( !openedHistogram && (getNumberOfEntries() > 1) && ( getCurrentEntry() == 0 ) )
       {
+         //---
+         // Check for filename with no entry("e0") in the name if current entry
+         // is 0 and we're multi entry. This handles the case of NITF with
+         // an image and cloud entry, assuming an existing dot histogram
+         // belongs to entry zero. Example:
+         // NITF file:      5V090205P0001912264B220000100282M_001508507.ntf
+         // Histogram file: 5V090205P0001912264B220000100282M_001508507.his
+         //---
+         getFilenameWithThisExt( ossimString(".his"), histoFile );
+         openedHistogram = histogram->importHistogram(histoFile);
+      }
+
+      if ( !openedHistogram )
+      {  
          histogram = 0;
       }
    }
@@ -1030,7 +1046,6 @@ bool ossimImageHandler::openOverview()
                // 3) dot.ovr
                // Assuming an existing dot overview belongs to entry zero.
                //---
-               overviewFilename = getFilename();
                getFilenameWithThisExt( ossimString(".ovr"), overviewFilename );
                // std::cout << "overviewFilename 3: " << overviewFilename << std::endl;
             }

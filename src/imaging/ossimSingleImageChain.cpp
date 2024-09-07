@@ -19,8 +19,6 @@
 // #include <ossim/imaging/ossimTiledImagePatch.h>
 #include <ossim/support_data/ossimSrcRecord.h>
 
-using namespace std;
-
 ossimSingleImageChain::ossimSingleImageChain()
    :
    ossimImageChain(),
@@ -783,7 +781,7 @@ void ossimSingleImageChain::addGeoPolyCutter()
    }
 }
 
-void ossimSingleImageChain::addGeoPolyCutterPolygon(const vector<ossimGpt>& polygon)
+void ossimSingleImageChain::addGeoPolyCutterPolygon(const std::vector<ossimGpt>& polygon)
 {
    if(!m_geoPolyCutter.valid())
    {
@@ -1138,15 +1136,32 @@ bool ossimSingleImageChain::openHistogram( ossimHistogramRemapper::StretchMode m
       ossimRefPtr<ossimHistogramRemapper> hr = getHistogramRemapper();
       if ( hr.valid() )
       {
-         ossimFilename f = ih->getFilenameWithThisExtension( ossimString("his") );
-         if ( hr->openHistogram( f ) == true )
+         ossimFilename histoFile = ih->getFilenameWithThisExtension( ossimString("his") );
+         bool openedHistogram = hr->openHistogram( histoFile );
+         if ( !openedHistogram && (ih->getNumberOfEntries() > 1) &&
+              ( ih->getCurrentEntry() == 0 ) )
+         {
+            //---
+            // Check for filename with no entry("e0") in the name if current entry
+            // is 0 and we're multi entry. This handles the case of NITF with
+            // an image and cloud entry, assuming an existing dot histogram
+            // belongs to entry zero. Example:
+            // NITF file:      5V090205P0001912264B220000100282M_001508507.ntf
+            // Histogram file: 5V090205P0001912264B220000100282M_001508507.his
+            //---            
+            ih->getFilenameWithThisExt( ossimString(".his"), histoFile );
+            std::cout << "histoFile 2: " << histoFile << std::endl;
+            openedHistogram = hr->openHistogram( histoFile );
+         }
+
+         if ( openedHistogram )
          {
             // Enable:
             hr->setEnableFlag(true);
-
+            
             // Set the mode:
             hr->setStretchMode( mode );
-
+            
             result = true;
          }
       }

@@ -4671,12 +4671,19 @@ bool ossimChipperUtil::setupChainHistogram(ossimRefPtr<ossimSingleImageChain> &c
                if (f.empty() || !f.exists())
                {
                   f = ih->getFilenameWithThisExtension(ossimString("his"));
-                  if (f.empty() || (f.exists() == false))
+                  if ( (f.empty() || (f.exists() == false) ) &&
+                       (ih->getNumberOfEntries() > 1) && ( ih->getCurrentEntry() == 0 ) )
                   {
-                     // For backward compatibility check if single entry and _e0.his
-                     f = ih->getFilenameWithThisExtension(ossimString("his"), true);
-                     if (!f.exists())
-                        f.clear();
+                     //---
+                     // Check for filename with no entry("e0") in the name if current entry
+                     // is 0 and we're multi entry. This handles the case of NITF with
+                     // an image and cloud entry, assuming an existing dot histogram
+                     // belongs to entry zero. Example:
+                     // NITF file:      5V090205P0001912264B220000100282M_001508507.ntf
+                     // Histogram file: 5V090205P0001912264B220000100282M_001508507.his
+                     //---
+                     ih->getFilenameWithThisExt( ossimString(".his"), f );
+                     if (!f.exists()) f.clear();
                   }
                }
 
